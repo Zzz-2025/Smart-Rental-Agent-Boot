@@ -1,3 +1,3 @@
-D:\Java\Java框架\Java框架项目\langchain4j-examples\customer-support-agent-example\src\test\java\dev\langchain4j\example\CustomerSupportAgentIT.java
-D:\Java\Java框架\Java框架项目\langchain4j-examples\customer-support-agent-example\src\test\java\dev\langchain4j\example\utils\JudgeModelAssertions.java
-D:\Java\Java框架\Java框架项目\langchain4j-examples\customer-support-agent-example\src\test\java\dev\langchain4j\example\utils\ResultAssert.java
+D:\Java\javaProgram\customer-support-agent-example\src\test\java\dev\langchain4j\example\CustomerSupportAgentIT.java
+D:\Java\javaProgram\customer-support-agent-example\src\test\java\dev\langchain4j\example\utils\JudgeModelAssertions.java
+D:\Java\javaProgram\customer-support-agent-example\src\test\java\dev\langchain4j\example\utils\ResultAssert.java

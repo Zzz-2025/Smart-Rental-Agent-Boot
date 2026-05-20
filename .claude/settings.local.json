@@ -9,7 +9,9 @@
       "Bash(xargs grep -l \"ImageContent.from\\\\|ImageContent\\(\")",
       "Bash(xargs grep -l \"ImageContent.from.*base64\\\\|ImageContent.from.*byte\\\\|ImageContent\\(\")",
       "Bash(mvn compile *)",
-      "Bash(mvn test-compile *)"
+      "Bash(mvn test-compile *)",
+      "Bash(mvn test *)",
+      "Bash(mvn verify *)"
     ]
   }
 }

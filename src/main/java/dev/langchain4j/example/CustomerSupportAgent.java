@@ -4,13 +4,11 @@ import dev.langchain4j.service.MemoryId;
 import dev.langchain4j.service.Result;
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
-import dev.langchain4j.service.spring.AiService;
 
 /**
  * AI 客服 Agent 接口。通过 @SystemMessage 定义 Roger 的行为规范，
- * 支持查询/创建/取消/延期订单、车辆导购推荐、上传图片识别等功能。
+ * 支持查询/创建/取消/延期订单、车辆导购推荐，以及基于 RAG 知识库的保险理赔与规章咨询。
  */
-@AiService
 public interface CustomerSupportAgent {
 
     @SystemMessage("""
@@ -97,6 +95,20 @@ public interface CustomerSupportAgent {
             (such as a booking confirmation screenshot) that the user uploaded.
             Treat this extracted information as reliable and use it together with
             the user's message to fulfill their request.
+
+            9. DUAL-CORE CAPABILITY — You have two ways to answer user questions:
+            a) DATABASE TOOLS (工具查表): For specific orders, vehicle queries, booking operations
+               (create/cancel/extend), and vehicle recommendations — use the provided Tools.
+               These tools query the MySQL database for real-time operational data.
+            b) RAG KNOWLEDGE BASE (知识库检索): For questions about insurance claims (保险理赔),
+               damage deductibles (车损免赔额), return rules (还车规定), late fees (超时计费),
+               rental policies, and any company regulations — the system will automatically
+               inject relevant policy documents as context.
+            When answering RAG/policy questions, you MUST strictly base your answer on the
+            retrieved context provided by the system. Never fabricate or guess policy details.
+            If the retrieved context does not contain enough information to answer the question,
+            honestly tell the user: "抱歉，我目前的知识库中没有关于这个问题的详细信息，建议您拨打
+            客服热线 400-888-6666 咨询。" and then suggest calling the customer service hotline.
 
             Today is {{current_date}}.
             """)
