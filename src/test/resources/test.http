@@ -1,0 +1,51 @@
+### Getting booking details (GET)
+GET http://localhost:8080/customerSupportAgent?sessionId=1&userMessage=Hi, when does my booking begin?
+
+### Getting booking details - providing missing customer info (1)
+GET http://localhost:8080/customerSupportAgent?sessionId=1&userMessage=My booking number is MS-569.
+
+### Getting booking details - providing missing customer info (2)
+GET http://localhost:8080/customerSupportAgent?sessionId=1&userMessage=My name is jon heny .
+
+### Cancelling booking (GET)
+GET http://localhost:8080/customerSupportAgent?sessionId=1&userMessage=Please cancel my booking.
+
+### Cancelling booking - confirmation (GET)
+GET http://localhost:8080/customerSupportAgent?sessionId=1&userMessage=Yes, cancel it.
+
+### Getting booking details (POST)
+POST http://localhost:8080/customerSupportAgent
+Content-Type: application/json
+
+{
+  "sessionId": "2",
+  "userMessage": "Hi, when does my booking begin?"
+}
+
+### Cancelling booking (POST)
+POST http://localhost:8080/customerSupportAgent
+Content-Type: application/json
+
+{
+  "sessionId": "2",
+  "userMessage": "Please cancel my booking MS-569, my name is jon heny."
+}
+
+### Upload image with text (multipart) - use curl or IntelliJ HTTP Client
+POST http://localhost:8080/customerSupportAgent/upload
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="sessionId"
+
+3
+--boundary
+Content-Disposition: form-data; name="userMessage"
+
+帮我把这张票退了
+--boundary
+Content-Disposition: form-data; name="file"; filename="ticket.png"
+Content-Type: image/png
+
+< ./src/test/resources/test-image.png
+--boundary--

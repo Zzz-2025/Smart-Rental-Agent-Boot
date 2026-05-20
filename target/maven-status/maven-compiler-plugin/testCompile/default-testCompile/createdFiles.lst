@@ -1,0 +1,8 @@
+dev\langchain4j\example\utils\JudgeModelAssertions$TextAssertion.class
+dev\langchain4j\example\utils\JudgeModelAssertions.class
+dev\langchain4j\example\utils\JudgeModelAssertions$ConditionAssessmentResult.class
+dev\langchain4j\example\utils\ResultAssert.class
+dev\langchain4j\example\utils\JudgeModelAssertions$ModelAssertion.class
+dev\langchain4j\example\utils\JudgeModelAssertions$ConditionAssessments.class
+dev\langchain4j\example\CustomerSupportAgentIT.class
+dev\langchain4j\example\utils\JudgeModelAssertions$ConditionAssessment.class

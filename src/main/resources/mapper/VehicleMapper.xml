@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    VehicleMapper SQL 映射文件。
+    定义车辆的按牌查询、空闲列表、条件筛选（分类/座位/预算）操作。
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dev.langchain4j.example.mapper.VehicleMapper">
+
+    <resultMap id="vehicleResultMap" type="dev.langchain4j.example.model.Vehicle">
+        <id property="licensePlate" column="license_plate"/>
+        <result property="vehicleType" column="vehicle_type"/>
+        <result property="category" column="category"/>
+        <result property="seats" column="seats"/>
+        <result property="availableQuantity" column="available_quantity"/>
+        <result property="totalQuantity" column="total_quantity"/>
+        <result property="dailyRate" column="daily_rate"/>
+    </resultMap>
+
+    <select id="findByLicensePlate" resultMap="vehicleResultMap">
+        SELECT * FROM vehicles WHERE license_plate = #{licensePlate}
+    </select>
+
+    <select id="findAllAvailable" resultMap="vehicleResultMap">
+        SELECT * FROM vehicles WHERE available_quantity > 0
+    </select>
+
+    <select id="queryAvailableVehicles" resultMap="vehicleResultMap">
+        SELECT * FROM vehicles
+        <where>
+            available_quantity > 0
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+            <if test="minSeats != null">
+                AND seats >= #{minSeats}
+            </if>
+            <if test="maxDailyRate != null">
+                AND daily_rate &lt;= #{maxDailyRate}
+            </if>
+        </where>
+        ORDER BY daily_rate ASC
+    </select>
+
+</mapper>

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(jar tf *)",
+      "Bash(javap *)",
+      "Bash(grep -v \"\\\\$\")",
+      "Bash(grep -v '\\\\$')",
+      "Bash(xargs grep -l -i \"vision\\\\|multimodal\\\\|ImageContent\\\\|image_content\")",
+      "Bash(xargs grep -l \"ImageContent.from\\\\|ImageContent\\(\")",
+      "Bash(xargs grep -l \"ImageContent.from.*base64\\\\|ImageContent.from.*byte\\\\|ImageContent\\(\")",
+      "Bash(mvn compile *)",
+      "Bash(mvn test-compile *)"
+    ]
+  }
+}

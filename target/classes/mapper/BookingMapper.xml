@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    BookingMapper SQL 映射文件。
+    定义订单的查询（按电话/身份证号）、创建、空闲检查、延期更新和删除操作。
+-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dev.langchain4j.example.mapper.BookingMapper">
+
+    <resultMap id="bookingResultMap" type="dev.langchain4j.example.model.Booking">
+        <id property="id" column="id"/>
+        <result property="bookingNumber" column="booking_number"/>
+        <result property="bookingBeginDate" column="booking_begin_date"/>
+        <result property="bookingEndDate" column="booking_end_date"/>
+        <result property="licensePlate" column="license_plate"/>
+        <result property="vehicleType" column="vehicle_type"/>
+        <result property="rentalLocation" column="rental_location"/>
+        <result property="totalAmount" column="total_amount"/>
+        <association property="customer" javaType="dev.langchain4j.example.model.Customer">
+            <result property="name" column="name"/>
+            <result property="surname" column="surname"/>
+            <result property="employerName" column="employer_name"/>
+            <result property="employerPhone" column="employer_phone"/>
+            <result property="employerIdNumber" column="employer_id_number"/>
+        </association>
+    </resultMap>
+
+    <select id="findByBookingNumberAndEmployerPhone" resultMap="bookingResultMap">
+        SELECT * FROM bookings
+        WHERE booking_number = #{bookingNumber}
+          AND employer_phone = #{employerPhone}
+    </select>
+
+    <select id="findByBookingNumberAndEmployerIdNumber" resultMap="bookingResultMap">
+        SELECT * FROM bookings
+        WHERE booking_number = #{bookingNumber}
+          AND employer_id_number = #{employerIdNumber}
+    </select>
+
+    <select id="countOverlappingBookings" resultType="int">
+        SELECT COUNT(*) FROM bookings
+        WHERE license_plate = #{licensePlate}
+          AND booking_number != #{excludeBookingNumber}
+          AND booking_begin_date &lt; #{endDate}
+          AND booking_end_date &gt; #{beginDate}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO bookings (booking_number, booking_begin_date, booking_end_date,
+                              name, surname, employer_name, employer_phone, employer_id_number,
+                              license_plate, vehicle_type, rental_location, total_amount)
+        VALUES (#{bookingNumber}, #{bookingBeginDate}, #{bookingEndDate},
+                #{customer.name}, #{customer.surname},
+                #{customer.employerName}, #{customer.employerPhone}, #{customer.employerIdNumber},
+                #{licensePlate}, #{vehicleType}, #{rentalLocation}, #{totalAmount})
+    </insert>
+
+    <update id="updateBookingEndDateAndAmount">
+        UPDATE bookings
+        SET booking_end_date = #{newEndDate},
+            total_amount = #{totalAmount}
+        WHERE booking_number = #{bookingNumber}
+    </update>
+
+    <delete id="deleteByBookingNumberAndEmployerPhone">
+        DELETE FROM bookings
+        WHERE booking_number = #{bookingNumber}
+          AND employer_phone = #{employerPhone}
+    </delete>
+
+    <delete id="deleteByBookingNumberAndEmployerIdNumber">
+        DELETE FROM bookings
+        WHERE booking_number = #{bookingNumber}
+          AND employer_id_number = #{employerIdNumber}
+    </delete>
+
+</mapper>
