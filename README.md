@@ -53,7 +53,10 @@ src/
     resources/
       application.properties                  -- 配置文件
       schema.sql / data.sql                   -- 建表 DDL + 种子数据
-      miles-of-smiles-terms-of-use.txt        -- RAG 知识库文档
+      miles-of-smiles-terms-of-use.txt        -- RAG 知识库文档（服务条款）
+      docs/
+        insurance_policy.txt                  -- RAG 知识库（保险理赔政策）
+        return_rules.txt                      -- RAG 知识库（还车计费规则）
       static/index.html                       -- 聊天 UI
   test/
     java/dev/langchain4j/example/
@@ -118,6 +121,108 @@ langchain4j.open-ai.chat-model.model-name=MiniMax-M2.5
 ```
 
 默认使用阿里云 DashScope 作为 LLM 后端，也可替换为任意 OpenAI 兼容接口（OpenAI、Azure OpenAI、Ollama 等）。
+
+## 切换大模型
+
+本项目与 LLM 的耦合点分布在配置、Token 计数、视觉识别三处，切换模型时需要逐项处理。
+
+### 一、改配置即可（聊天模型）
+
+`application.properties` 中 3 个值，同时修改即可切换聊天模型：
+
+```properties
+# 示例：切换为 DeepSeek
+langchain4j.open-ai.chat-model.api-key=sk-your-deepseek-key
+langchain4j.open-ai.chat-model.base-url=https://api.deepseek.com/v1
+langchain4j.open-ai.chat-model.model-name=deepseek-chat
+
+# 示例：切换为本地 Ollama
+# langchain4j.open-ai.chat-model.api-key=ollama
+# langchain4j.open-ai.chat-model.base-url=http://localhost:11434/v1
+# langchain4j.open-ai.chat-model.model-name=qwen2.5:7b
+```
+
+只要目标服务兼容 OpenAI 的 `/v1/chat/completions` 协议，改这 3 行即可，**不需要改任何 Java 代码**。
+
+### 二、必须改代码（Token 计数器）
+
+> 文件：`CustomerSupportAgentConfiguration.java`
+
+```java
+// 当前写死了 GPT-4o-mini 的 tokenizer
+@Bean
+TokenCountEstimator tokenCountEstimator() {
+    return new OpenAiTokenCountEstimator(GPT_4_O_MINI);
+}
+```
+
+这个 Bean 用于：
+1. 计算每条消息的 token 数量
+2. `TokenWindowChatMemory` 根据它来截断对话记忆（当前设置 max 5000 token）
+
+**切换非 OpenAI 模型时必须修改：**
+
+| 目标模型 | 改法 |
+|---|---|
+| 另一个 OpenAI 模型 | 改 `OpenAiTokenCountEstimator` 构造函数参数，如 `GPT_4_O` |
+| 非 OpenAI 模型（DeepSeek / Qwen / GLM 等） | 换成一个相近 tokenizer 的 `TokenCountEstimator` 实现，或使用近似算法。部分社区有 `DeepSeekTokenCountEstimator` 等实现可直接替换 |
+| 不想精确计算 | 可改用字符数估算：`token -> token.length() / 4`（中英文混合场景大致可用），但对话记忆截断会不够精准 |
+
+如果不改，后果是对话记忆窗口控制不准，可能提前截断或超出 LLM 上下文限制，但不影响功能正常运行。
+
+### 三、必须改代码（视觉模型）
+
+> 文件：`CustomerSupportAgentController.java`
+
+```java
+// 当前写死了通义千问视觉模型
+this.visionModel = OpenAiChatModel.builder()
+        .apiKey(apiKey)
+        .baseUrl(baseUrl)
+        .modelName("qwen-vl-max")  // ← 这里
+        ...
+        .build();
+```
+
+这个模型仅在**图片上传**功能中使用（用户上传订单截图，提取图片中的文字）。
+
+| 场景 | 做法 |
+|---|---|
+| 不需要图片功能 | 直接删除这段构建代码和相关上传端点即可 |
+| 目标服务有视觉模型 | 改 `modelName` 为目标视觉模型名 |
+| 目标服务无视觉模型 | 去掉上传端点，并在前端隐藏图片按钮 |
+
+### 四、不改即可正常工作的
+
+| 组件 | 原因 |
+|---|---|
+| `AllMiniLmL6V2EmbeddingModel` | 本地 ONNX 模型，运行在 JVM 内，不依赖外部 API |
+| `InMemoryEmbeddingStore` | 纯内存向量库，与 LLM 无关 |
+| `BookingTools` / `VehicleTools` | 查 MySQL 数据库，不经过 LLM |
+| `ContentRetriever`（RAG） | 只依赖本地嵌入模型 + 内存向量库，完全离线 |
+| MyBatis / 数据库 | 与模型无关 |
+
+### 五、提示词调优（建议但不必须）
+
+`CustomerSupportAgent.java` 中的 `@SystemMessage` 是针对 GPT 系模型编写的。不同模型对提示词的理解存在差异：
+
+- **Claude**：对 XML 标签结构响应更好，可能需要将规则用 `<rule>` 包裹
+- **DeepSeek**：中文理解能力强，通常无需大改
+- **Qwen / GLM**：中文原生支持好，但 tool-calling 指令遵循度有差异
+
+切换后建议跑一遍集成测试（`mvn verify`），观察 tool 调用准确率和 RAG 回答质量，按需微调提示词。
+
+### 六、完整切换检查清单
+
+```
+□ 1. 改 application.properties 中 3 个 LLM 配置（api-key / base-url / model-name）
+□ 2. 改 CustomerSupportAgentConfiguration.java 中 TokenCountEstimator
+□ 3. 评估是否需要图片功能：
+      需要  → 改 CustomerSupportAgentController.java 中 visionModel 的 modelName
+      不需要 → 删除上传端点和 visionModel 构建代码
+□ 4. 启动应用，对话测试
+□ 5. （可选）跑集成测试，按需微调 @SystemMessage 提示词
+```
 
 ### 3. 启动应用
 
