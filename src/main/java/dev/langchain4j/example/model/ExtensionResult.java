@@ -4,7 +4,16 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
- * 续租操作返回结果，包含更新后的还车时间、延长天数、额外费用和总金额。
+ * =========================== 延期结果 ===========================
+ *
+ * 当用户请求"延期还车"时，系统计算完后返回这个对象。
+ *
+ * 字段说明：
+ *   bookingNumber — 订单号
+ *   newEndDate    — 更新后的还车日期
+ *   extraDays     — 延长的天数
+ *   extraAmount   — 延期产生的额外费用（天数 × 300 元/天）
+ *   totalAmount   — 更新后的订单总金额（原金额 + 额外费用）
  */
 public class ExtensionResult {
 

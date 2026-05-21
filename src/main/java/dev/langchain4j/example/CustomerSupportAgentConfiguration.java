@@ -34,33 +34,62 @@ import static dev.langchain4j.data.document.loader.FileSystemDocumentLoader.load
 import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_4_O_MINI;
 
 /**
- * Spring 配置类。初始化 AI Agent 所需的基础设施：
- * 聊天记忆窗口（5000 token）、嵌入模型与向量存储、RAG 知识库检索器，
- * 以及绑定 BookingTools / VehicleTools / ContentRetriever 的 Agent 实例。
+ * =========================== Spring 配置中心 ===========================
+ *
+ * 这个类负责"组装"整个 AI 客服系统的各个零件。可以把它理解为一个"工厂流水线"：
+ *
+ *   步骤1: 聊天记忆（chatMemoryProvider）
+ *     → 让 AI 记住前后对话，最多保留 5000 个 token（约 3000 个汉字）的上下文
+ *
+ *   步骤2: 文本嵌入模型（embeddingModel）
+ *     → 把文字转换成数学向量，用于后续的"语义搜索"
+ *
+ *   步骤3: 向量知识库（embeddingStore）
+ *     → 把公司政策文档（服务条款、保险政策、还车规则）切成小段，
+ *       逐段转换成向量，存入内存向量库
+ *
+ *   步骤4: 知识检索器（contentRetriever）
+ *     → 当用户提问时，从向量库中搜索最相关的 3 条文档片段（最低相似度 50%）
+ *
+ *   步骤5: 组装 Agent（customerSupportAgent）
+ *     → 把大语言模型 + 聊天记忆 + 知识库 + 业务工具 组装成一个完整的 AI 客服
+ *
+ * 这些组件都是 Spring Bean，会被自动注入到需要它们的地方。
  */
 @Configuration
 public class CustomerSupportAgentConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(CustomerSupportAgentConfiguration.class);
 
+    // ==================== 聊天记忆：让 AI 记住上下文 ====================
+
     @Bean
     ChatMemoryProvider chatMemoryProvider(TokenCountEstimator tokenizer) {
         return memoryId -> TokenWindowChatMemory.builder()
-                .id(memoryId)
-                .maxTokens(5000, tokenizer)
+                .id(memoryId)                     // 用 sessionId 区分不同用户
+                .maxTokens(5000, tokenizer)       // 最多保留 5000 token
                 .build();
     }
 
+    // ==================== 嵌入模型：把文字变成数学向量 ====================
+
     @Bean
     EmbeddingModel embeddingModel() {
+        // AllMiniLmL6V2 是一个轻量级嵌入模型，本地运行，无需联网
         return new AllMiniLmL6V2EmbeddingModel();
     }
 
+    // ==================== 向量知识库：存储公司政策文档 ====================
+
     @Bean
     EmbeddingStore<TextSegment> embeddingStore(EmbeddingModel embeddingModel, TokenCountEstimator tokenizer) throws IOException {
+        // 内存向量库（重启后需重新导入，适合演示；生产环境应换 Redis/Postgres）
         EmbeddingStore<TextSegment> embeddingStore = new InMemoryEmbeddingStore<>();
 
+        // 文档切分器：每 100 字切一段，段间不重叠
         DocumentSplitter documentSplitter = DocumentSplitters.recursive(100, 0, tokenizer);
+
+        // 文档导入器：切分 → 嵌入 → 存库
         EmbeddingStoreIngestor ingestor = EmbeddingStoreIngestor.builder()
                 .documentSplitter(documentSplitter)
                 .embeddingModel(embeddingModel)
@@ -69,7 +98,7 @@ public class CustomerSupportAgentConfiguration {
 
         ResourcePatternResolver resolver = new PathMatchingResourcePatternResolver();
 
-        // 1. 加载原有的服务条款文档（取消政策等）
+        // 导入服务条款文档
         Resource termsResource = resolver.getResource("classpath:miles-of-smiles-terms-of-use.txt");
         if (termsResource.exists()) {
             log.info("正在将服务条款文档导入向量存储: {}", termsResource.getFilename());
@@ -77,9 +106,8 @@ public class CustomerSupportAgentConfiguration {
             ingestor.ingest(termsDoc);
         }
 
-        // 2. 扫描 resources/docs/ 目录下所有 .txt 文件，批量导入向量库
+        // 批量导入 resources/docs/ 下所有 .txt 知识库文件（保险政策、还车规则等）
         Resource[] docResources = resolver.getResources("classpath:docs/*.txt");
-
         for (Resource resource : docResources) {
             log.info("正在将知识库文档导入向量存储: {}", resource.getFilename());
             Document document = loadDocument(resource.getFile().toPath(), new TextDocumentParser());
@@ -90,10 +118,12 @@ public class CustomerSupportAgentConfiguration {
         return embeddingStore;
     }
 
+    // ==================== 知识检索器：语义搜索相关文档 ====================
+
     @Bean
     ContentRetriever contentRetriever(EmbeddingStore<TextSegment> embeddingStore, EmbeddingModel embeddingModel) {
-        int maxResults = 3;
-        double minScore = 0.5;
+        int maxResults = 3;       // 最多返回 3 条最相关的文档片段
+        double minScore = 0.5;    // 最低相似度 50%，低于此分数的结果丢弃
 
         return EmbeddingStoreContentRetriever.builder()
                 .embeddingStore(embeddingStore)
@@ -103,14 +133,23 @@ public class CustomerSupportAgentConfiguration {
                 .build();
     }
 
+    // ==================== Token 计数器：估算文本消耗的 Token 数 ====================
+
     @Bean
     TokenCountEstimator tokenCountEstimator() {
+        // 使用 OpenAI GPT-4o-mini 的 token 计算规则
         return new OpenAiTokenCountEstimator(GPT_4_O_MINI);
     }
 
+    // ==================== 组装 AI Agent ====================
+
     /**
-     * 手动构建 CustomerSupportAgent，将 ContentRetriever (RAG) 与
-     * BookingTools / VehicleTools (MySQL) 双核联动注入 Agent。
+     * 把所有零件拼装成一个完整的 AI 客服：
+     *   - chatModel:         大语言模型（"大脑"）
+     *   - chatMemoryProvider: 聊天记忆（"记性"）
+     *   - contentRetriever:  知识库检索（"翻手册"）
+     *   - bookingTools:      订单操作能力（"办业务的手"）
+     *   - vehicleTools:      车辆查询能力（"查库存的眼"）
      */
     @Bean
     CustomerSupportAgent customerSupportAgent(ChatModel chatModel,

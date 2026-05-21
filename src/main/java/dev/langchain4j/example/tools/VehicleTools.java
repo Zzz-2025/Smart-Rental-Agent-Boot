@@ -9,8 +9,14 @@ import java.math.BigDecimal;
 import java.util.List;
 
 /**
- * 车辆工具组件。将 VehicleService 封装为 AI Agent 可调用的 @Tool 方法，
- * 包括按牌查车、空闲列表、条件筛选（分类/座位/预算）。
+ * =========================== 车辆工具组件 ===========================
+ *
+ * 为 AI Agent 提供车辆查询能力。每个 @Tool 方法都可以被大模型自主调用。
+ *
+ * 三个工具方法：
+ *   1. 按车牌查车   — 精确查询某一辆车的详情
+ *   2. 查空闲车辆   — 列出所有有库存的车
+ *   3. 条件筛选     — 按分类/座位数/预算过滤，用于智能推荐
  */
 @Component
 public class VehicleTools {

@@ -3,7 +3,18 @@ package dev.langchain4j.example.model;
 import java.math.BigDecimal;
 
 /**
- * 车辆实体，对应 vehicles 表。主键为车牌号，包含车型分类、座位数、空闲/总数量和日租金。
+ * =========================== 车辆实体 ===========================
+ *
+ * 对应数据库的 vehicles 表，主键为车牌号（license_plate）。
+ *
+ * 字段说明：
+ *   licensePlate      — 车牌号（主键，唯一标识一辆车）
+ *   vehicleType       — 车辆型号名称，如"丰田汉兰达"
+ *   category          — 车型分类：轿车、SUV、MPV、豪华、越野
+ *   seats             — 座位数
+ *   availableQuantity — 当前空闲数量（可租的辆数）
+ *   totalQuantity     — 总数量（空闲 + 已租出）
+ *   dailyRate         — 日租金（元/天）
  */
 public class Vehicle {
 

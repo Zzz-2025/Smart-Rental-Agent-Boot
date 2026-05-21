@@ -1,7 +1,16 @@
 package dev.langchain4j.example.model;
 
 /**
- * 客户（雇主）信息，嵌入在 Booking 中。包含姓名和雇主身份信息。
+ * =========================== 客户（雇主）信息 ===========================
+ *
+ * 嵌入在 Booking 中的子对象，包含租车时需要采集的客户信息。
+ * 数据库中这些字段和 bookings 表在同一行（通过 MyBatis association 映射）。
+ *
+ * 字段说明：
+ *   name / surname     — 客户的名和姓
+ *   employerName       — 雇主姓名
+ *   employerPhone      — 雇主联系电话（用于身份验证）
+ *   employerIdNumber   — 雇主身份证号（用于身份验证）
  */
 public class Customer {
 

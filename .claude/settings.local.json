@@ -11,7 +11,17 @@
       "Bash(mvn compile *)",
       "Bash(mvn test-compile *)",
       "Bash(mvn test *)",
-      "Bash(mvn verify *)"
+      "Bash(mvn verify *)",
+      "Bash(jar xf *)",
+      "Bash(javap -p dev/langchain4j/service/TokenStream.class)",
+      "Bash(rm -rf dev)",
+      "Bash(javap -p dev/langchain4j/service/Result.class)",
+      "Bash(javap -p 'dev/langchain4j/service/Result$ResultBuilder.class')",
+      "Bash(javap -p dev/langchain4j/model/chat/response/ChatResponse.class)",
+      "Bash(docker exec *)",
+      "Bash(curl *)",
+      "Bash(docker stop *)",
+      "Bash(docker rm *)"
     ]
   }
 }

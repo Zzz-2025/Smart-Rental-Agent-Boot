@@ -3,7 +3,19 @@ package dev.langchain4j.example.model;
 import java.time.LocalDate;
 
 /**
- * 租车订单实体，对应 bookings 表。包含订单编号、租车时间、客户信息、车辆信息及总金额。
+ * =========================== 租车订单实体 ===========================
+ *
+ * 对应数据库的 bookings 表，每一个 Booking 对象就是一条订单记录。
+ *
+ * 字段说明：
+ *   id            — 数据库自增主键（不需要手动填）
+ *   bookingNumber — 订单号，如 MS-123（手动指定）
+ *   bookingBeginDate / bookingEndDate — 租车的起止日期
+ *   customer      — 嵌套的客户信息（姓名、雇主电话、身份证号）
+ *   licensePlate  — 车牌号
+ *   vehicleType   — 车辆型号，如"丰田汉兰达"
+ *   rentalLocation— 取车地点
+ *   totalAmount   — 订单总金额（日租金 300 × 天数）
  */
 public class Booking {
 

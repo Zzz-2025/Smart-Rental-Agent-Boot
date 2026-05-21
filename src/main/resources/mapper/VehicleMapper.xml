@@ -41,4 +41,11 @@
         ORDER BY daily_rate ASC
     </select>
 
+    <update id="decrementAvailableQuantity">
+        UPDATE vehicles
+        SET available_quantity = available_quantity - 1
+        WHERE license_plate = #{licensePlate}
+          AND available_quantity > 0
+    </update>
+
 </mapper>

@@ -1,3 +1,6 @@
+D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\config\RabbitMQConfig.java
+D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\config\RedissonConfig.java
+D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\consumer\OrderConsumer.java
 D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\controller\CustomerSupportAgentController.java
 D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\CustomerSupportAgent.java
 D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\CustomerSupportAgentApplication.java
@@ -6,6 +9,7 @@ D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j
 D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\mapper\BookingMapper.java
 D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\mapper\VehicleMapper.java
 D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\model\Booking.java
+D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\model\BookingMessage.java
 D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\model\Customer.java
 D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\model\ExtensionResult.java
 D:\Java\javaProgram\customer-support-agent-example\src\main\java\dev\langchain4j\example\model\Vehicle.java
