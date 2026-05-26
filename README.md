@@ -9,6 +9,7 @@
 - RAG 知识库问答（保险、还车规则、服务条款）
 - 上传图片提取文字（视觉模型）
 - Redis 分布式锁防超卖 + IP 限流
+- Langfuse 可观测性（OpenTelemetry）：LLM 调用链、Tool 参数、Token 消耗、延迟追踪
 
 ## 技术栈
 
@@ -21,6 +22,7 @@
 | 嵌入模型 | AllMiniLmL6V2（本地 ONNX） |
 | 数据库 | MySQL 8.0 + MyBatis 3.0.4 |
 | 缓存/锁 | Redisson (Redis 7.2) |
+| 可观测性 | OpenTelemetry 1.44 + Langfuse Cloud |
 | 前端 | 单页 HTML/CSS/JS |
 
 ## 项目结构
@@ -42,6 +44,9 @@ src/main/java/dev/langchain4j/example/
     VehicleService.java                      -- 车辆业务逻辑
   mapper/
     BookingMapper.java / VehicleMapper.java  -- MyBatis DAO
+  observability/
+    LangfuseConfiguration.java               -- OpenTelemetry → Langfuse 配置
+    LangfuseChatModelListener.java           -- ChatModelListener 追踪 LLM/Tool
   model/
     Booking.java / Vehicle.java / ...
 src/main/resources/
@@ -69,6 +74,7 @@ CustomerSupportAgent (@AiService)
   ▼
 LangChain4j → LLM（MiniMax-M2.5 / DashScope）
   │  路由 @Tool 调用
+  │  ChatModelListener → OTel Span → Langfuse（可观测性）
   ▼
 BookingTools / VehicleTools
   │  Redisson RLock（按车牌加锁，防超卖）
@@ -162,6 +168,81 @@ langchain4j.open-ai.chat-model.model-name=deepseek-chat
 ```
 
 > 切换非 OpenAI 模型时，还需修改 `CustomerSupportAgentConfiguration.java` 中的 `TokenCountEstimator` 和 `CustomerSupportAgentController.java` 中的视觉模型名。详见配置文件中注释。
+
+## 可观测性（Langfuse）
+
+项目使用 OpenTelemetry 将 LLM 调用链、Tool 执行、Token 消耗、延迟等以 Span 形式异步上报到 Langfuse。
+
+### 配置
+
+编辑 `application.properties`，填入 Langfuse 项目凭据即可启用：
+
+```properties
+langfuse.public-key=pk-lf-xxx
+langfuse.secret-key=sk-lf-xxx
+langfuse.host=https://cloud.langfuse.com
+```
+
+留空则自动禁用，不影响主流程。
+
+### Trace 结构
+
+每次客户对话生成一条 Trace，包含以下 Span：
+
+```
+Trace: "customer-support-agent"
+  │  langfuse.trace.input / output（用户消息 / AI 回复）
+  │  session.id
+  │
+  ├── Generation: "chat MiniMax-M2.5"
+  │     gen_ai.request.model, gen_ai.usage.input_tokens/output_tokens
+  │     langfuse.observation.input/output（LLM 输入输出）
+  │     latency_ms（响应延迟）
+  │
+  ├── Span: "getBookingDetailsByPhone"（Tool 调用）
+  │     langfuse.observation.input（参数 JSON）
+  │     langfuse.observation.output（返回结果 JSON）
+  │
+  └── Generation: "chat MiniMax-M2.5"（整合 Tool 结果后的最终回复）
+```
+
+### 架构
+
+```
+Controller
+  │  创建根 Span（customer-support-agent）
+  │  try (Scope scope = span.makeCurrent())
+  ▼
+LangChain4j → OpenAiChatModel
+  │
+  ├── ChatModelListener.onRequest  →  创建 Generation Span
+  │
+  ├── LLM API 调用
+  │
+  ├── ChatModelListener.onResponse →  记录 token/latency/output
+  │     │                             + 提取 toolExecutionRequests
+  │     │                             + 创建 Tool Span（ThreadLocal 暂存）
+  │     ▼
+  │   Tool 执行（LangChain4j 框架调度）
+  │     │
+  │     ▼
+  │   ChatModelListener.onRequest  →  匹配 ToolExecutionResultMessage
+  │     （下一次 LLM 调用）              → 完成 Tool Span（设置 output，end）
+  │
+  └── ...（循环直到最终回复）
+  │
+  ▼
+BatchSpanProcessor（异步批量）→ OTLP HTTP → Langfuse
+```
+
+### 关键实现
+
+| 组件 | 文件 | 职责 |
+|------|------|------|
+| OTel 配置 | `LangfuseConfiguration.java` | 凭证为空 → `OpenTelemetry.noop()`；有效 → 构建 `OtlpHttpSpanExporter` + `BatchSpanProcessor` |
+| LLM 追踪 | `LangfuseChatModelListener.java` | 实现 `ChatModelListener`，为每次 LLM 调用创建 Generation Span |
+| Tool 追踪 | 同上 | 利用 ThreadLocal 跨 LLM 调用传递 Tool Span，在 `onResponse` 创建、下次 `onRequest` 完成 |
+| 根 Trace | `CustomerSupportAgentController.java` | 包裹 `agent.answer()` 调用，设置 `langfuse.trace.input/output` |
 
 ## API
 

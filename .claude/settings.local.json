@@ -21,7 +21,27 @@
       "Bash(docker exec *)",
       "Bash(curl *)",
       "Bash(docker stop *)",
-      "Bash(docker rm *)"
+      "Bash(docker rm *)",
+      "Bash(netstat -ano)",
+      "Bash(tasklist /FI \"PID eq 11868\")",
+      "Bash(tasklist /FI \"PID eq 16776\")",
+      "Bash(tasklist /FI \"PID eq 19376\")",
+      "Bash(sc query *)",
+      "Bash(findstr /i \"mysql\")",
+      "Bash(powershell *)",
+      "Bash(mysql *)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:tessl.io)",
+      "WebFetch(domain:central.sonatype.com)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:search.maven.org)",
+      "WebFetch(domain:langfuse.com)",
+      "WebFetch(domain:api.reference.langfuse.com)",
+      "WebFetch(domain:repo1.maven.org)",
+      "WebFetch(domain:blog.csdn.net)",
+      "Bash(mvn dependency:tree -q)"
     ]
   }
 }

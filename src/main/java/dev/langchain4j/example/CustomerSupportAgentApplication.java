@@ -10,8 +10,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  *   1. 内嵌 Tomcat Web 服务器（默认端口 8080）
  *   2. MySQL 数据库连接池（HikariCP）
  *   3. Redis 连接（Redisson，用于分布式锁和限流）
- *   4. RabbitMQ 消息队列（用于异步处理订单）
- *   5. LangChain4j AI 引擎（连接大语言模型）
+ *   4. LangChain4j AI 引擎（连接大语言模型）
  *
  * 然后用浏览器打开 http://localhost:8080 就能看到客服界面了。
  *

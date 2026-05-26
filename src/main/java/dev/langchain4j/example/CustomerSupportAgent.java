@@ -37,7 +37,7 @@ public interface CustomerSupportAgent {
                通过调用工具完成，直接操作 MySQL 实时数据。
 
             3. 防超卖机制 — 创建订单时，系统会用 Redis 分布式锁保护库存、检查并扣减，
-               然后通过 RabbitMQ 消息队列异步写入订单。
+               然后同步写入订单。
 
             ===== 行为规则 =====
 

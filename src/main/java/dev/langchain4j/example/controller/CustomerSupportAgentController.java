@@ -8,6 +8,10 @@ import dev.langchain4j.example.CustomerSupportAgent;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+import io.opentelemetry.api.trace.Tracer;
+import io.opentelemetry.context.Scope;
 import jakarta.servlet.http.HttpServletRequest;
 import org.redisson.api.RRateLimiter;
 import org.redisson.api.RateType;
@@ -55,6 +59,8 @@ public class CustomerSupportAgentController {
     private final CustomerSupportAgent customerSupportAgent;
     private final ChatModel visionModel;
     private final RedissonClient redissonClient;
+    private final Tracer tracer;
+    private final boolean tracingEnabled;
 
     // 支持的图片格式
     private static final Set<String> SUPPORTED_IMAGE_TYPES = Set.of(
@@ -83,10 +89,14 @@ public class CustomerSupportAgentController {
     public CustomerSupportAgentController(
             CustomerSupportAgent customerSupportAgent,
             RedissonClient redissonClient,
+            Tracer tracer,
             @Value("${langchain4j.open-ai.chat-model.api-key}") String apiKey,
-            @Value("${langchain4j.open-ai.chat-model.base-url}") String baseUrl) {
+            @Value("${langchain4j.open-ai.chat-model.base-url}") String baseUrl,
+            @Value("${langfuse.public-key:}") String langfusePublicKey) {
         this.customerSupportAgent = customerSupportAgent;
         this.redissonClient = redissonClient;
+        this.tracer = tracer;
+        this.tracingEnabled = langfusePublicKey != null && !langfusePublicKey.isBlank();
 
         // 视觉模型：用于识别用户上传图片中的文字（如订单截图）
         // 这里使用通义千问的 qwen-vl-max 多模态模型
@@ -118,7 +128,24 @@ public class CustomerSupportAgentController {
         String userMessage = body.get("userMessage");
         log.info("Request: ip={}, sessionId={}", ip, sessionId);
 
-        // 第三步：把消息交给 AI Agent 处理，直接返回回复
+        // 第三步：把消息交给 AI Agent 处理（包裹在 Langfuse Trace 中）
+        if (tracingEnabled) {
+            Span traceSpan = tracer.spanBuilder("customer-support-agent")
+                    .setAttribute("langfuse.trace.input", userMessage)
+                    .setAttribute("session.id", sessionId)
+                    .startSpan();
+            try (Scope scope = traceSpan.makeCurrent()) {
+                String answer = customerSupportAgent.answer(sessionId, userMessage);
+                traceSpan.setAttribute("langfuse.trace.output", answer);
+                return answer;
+            } catch (Exception e) {
+                traceSpan.recordException(e);
+                traceSpan.setStatus(StatusCode.ERROR);
+                throw e;
+            } finally {
+                traceSpan.end();
+            }
+        }
         return customerSupportAgent.answer(sessionId, userMessage);
     }
 
@@ -160,6 +187,23 @@ public class CustomerSupportAgentController {
             combinedMessage = userMessage;
         }
 
+        if (tracingEnabled) {
+            Span traceSpan = tracer.spanBuilder("customer-support-agent")
+                    .setAttribute("langfuse.trace.input", combinedMessage)
+                    .setAttribute("session.id", sessionId)
+                    .startSpan();
+            try (Scope scope = traceSpan.makeCurrent()) {
+                String answer = customerSupportAgent.answer(sessionId, combinedMessage);
+                traceSpan.setAttribute("langfuse.trace.output", answer);
+                return answer;
+            } catch (Exception e) {
+                traceSpan.recordException(e);
+                traceSpan.setStatus(StatusCode.ERROR);
+                throw e;
+            } finally {
+                traceSpan.end();
+            }
+        }
         return customerSupportAgent.answer(sessionId, combinedMessage);
     }
 

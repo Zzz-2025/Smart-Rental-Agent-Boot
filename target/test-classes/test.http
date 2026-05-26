@@ -1,18 +1,3 @@
-### Getting booking details (GET)
-GET http://localhost:8080/customerSupportAgent?sessionId=1&userMessage=Hi, when does my booking begin?
-
-### Getting booking details - providing missing customer info (1)
-GET http://localhost:8080/customerSupportAgent?sessionId=1&userMessage=My booking number is MS-569.
-
-### Getting booking details - providing missing customer info (2)
-GET http://localhost:8080/customerSupportAgent?sessionId=1&userMessage=My name is jon heny .
-
-### Cancelling booking (GET)
-GET http://localhost:8080/customerSupportAgent?sessionId=1&userMessage=Please cancel my booking.
-
-### Cancelling booking - confirmation (GET)
-GET http://localhost:8080/customerSupportAgent?sessionId=1&userMessage=Yes, cancel it.
-
 ### Getting booking details (POST)
 POST http://localhost:8080/customerSupportAgent
 Content-Type: application/json

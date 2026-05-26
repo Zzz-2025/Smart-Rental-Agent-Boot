@@ -4,5 +4,4 @@ dev\langchain4j\example\utils\JudgeModelAssertions$ConditionAssessmentResult.cla
 dev\langchain4j\example\utils\ResultAssert.class
 dev\langchain4j\example\utils\JudgeModelAssertions$ModelAssertion.class
 dev\langchain4j\example\utils\JudgeModelAssertions$ConditionAssessments.class
-dev\langchain4j\example\CustomerSupportAgentIT.class
 dev\langchain4j\example\utils\JudgeModelAssertions$ConditionAssessment.class

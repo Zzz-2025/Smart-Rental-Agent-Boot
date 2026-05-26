@@ -27,8 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * 核心方法：
  *   1. 查询：getBookingDetailsByPhone / ByIdNumber
- *   2. 同步创建：createBooking（直接写库，旧版用）
- *   3. 异步处理：processAsyncOrder（RabbitMQ 消费者调用，库存已在锁内扣减）
+ *   2. 同步创建：createBooking（直接写库，库存已在锁内扣减）
+ *   3. 同步创建：createBooking（直接写库）
  *   4. 延期续租：extendBookingByPhone / ByIdNumber
  *   5. 取消：cancelBookingByPhone / ByIdNumber
  *   6. 冲突检查：checkVehicleAvailability
