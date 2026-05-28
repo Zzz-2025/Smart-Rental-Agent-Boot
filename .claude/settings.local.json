@@ -41,7 +41,18 @@
       "WebFetch(domain:api.reference.langfuse.com)",
       "WebFetch(domain:repo1.maven.org)",
       "WebFetch(domain:blog.csdn.net)",
-      "Bash(mvn dependency:tree -q)"
+      "Bash(mvn dependency:tree -q)",
+      "Bash(where npx *)",
+      "Read(//c/Program Files/nodejs/**)",
+      "Bash(dir \"C:\\\\Program Files\\\\nodejs\\\\npx*\")",
+      "Bash(npm --version)",
+      "Bash(npx --version)",
+      "Bash(dir /s /b \"%APPDATA%\\\\JetBrains\\\\*proxyai*\")",
+      "Bash(dir /s /b \"%APPDATA%\\\\JetBrains\\\\*proxy*\")",
+      "Bash(dir /s /b \"%USERPROFILE%\\\\.claude\\\\*\")",
+      "Bash(tasklist)",
+      "Bash(docker-compose --version)",
+      "Bash(docker compose *)"
     ]
   }
 }
